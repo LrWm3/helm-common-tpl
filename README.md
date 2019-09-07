@@ -53,6 +53,8 @@ These requirements may require extending off-the-shelf components.
 Apps are example applications meant to demonstrate various kinds of functionality provided by either infrastructure or common-tpl. 
 In a real application, these would really do things.
 
+Apps also have custom go code associated to make for better examples.
+
 #### App requirements
 
 - [ ] Apps must have tests demonstrating their function works
