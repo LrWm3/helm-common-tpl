@@ -45,7 +45,7 @@ workload:
       command: ["./rest-endpoint", "track-subscription"]
   
   # short-hand to automatically apply the environment variable secrets and volume-mounts associated with kafka and 
-  # mongo connections
+  # mongo connections to this deployment
   addKafkaCred: "true"
   addMongoCred: "true"
 
@@ -68,6 +68,15 @@ workload:
     # type: Configmap (assume configmap always probably)
   - dir: ./relative/path/to/a/dir
     path: /absolute/path/to/mount/dir
+
+  # mount the host filesystem as a volume using HostPath, always schedule nodes on this pod
+  mountHostSystem:
+    host: "10.32.24.198"
+    - hostPath: /tmp/host/path
+      path: /absolute/container/path
+
+  # optional
+  # replicas: 1
 
   # resource limits
   resources: {}
