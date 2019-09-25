@@ -1,0 +1,93 @@
+# Helm template values.yml file example?
+
+# A job which initializes external dependencies for this service
+initializationJob:
+  enabled: "false"
+  createKafkaTopics:
+    # if enabled, will create topics if not present
+    enabled: "true"
+    kafkaTopicsSubFile: '/path/to/kafka/topics/file.txt'
+    kafkaTopicsPubFile: '/path/to/kafka/topics/file.txt'
+
+  createConfiguration:
+    # if enabled, will create config if not present
+    enabled: "true"
+    configFile: '/config/to/post/config.json'
+    configName: track-presentation_prod
+
+  seedDatabase:
+    # most services won't need to seed a database; will skip task if existing is found
+    enabled: "false"
+    seedDatabaseDir: '/path/to/seed/database/dir'
+
+#
+# The deployment, basically
+workload:
+  # May want to set to false to create job and networking without creating actual service?
+  enabled: "true"
+
+  # the main stuff
+  name: track-presentation
+  image: track-presentation:1.0.0
+
+  # extra labels if desired
+  labels: {}
+
+  # preconditions can be disabled
+  preconditions:
+    enabled: "true"
+    initContainers:
+    - name: wait-for-config
+      image: cloud-cli
+      command: ["./rest-endpoint", "my-config-endpoint"]
+    - name: wait-for-track-subscription
+      image: cloud-cli
+      command: ["./rest-endpoint", "track-subscription"]
+  
+  # short-hand to automatically apply the environment variable secrets and volume-mounts associated with kafka and 
+  # mongo connections
+  addKafkaCred: "true"
+  addMongoCred: "true"
+
+  # support standard method of applying environment variables
+  env:
+  - name: ENVIRONMENT_VAR
+    value: "value"
+  - name: MONGO_HOST
+    value: "mongo01.extern:27017"
+    # secret mounting can happen here too I guess
+    # or maybe we implicitly apply mongo and kafka cred to all services? that seems needless 
+
+  # volume mounts for configmap
+  # these files are converted into configmaps and templated appropriately
+  mountFileSystem:
+  # - file uses subpath when mounting
+  - file: ./relative/path/to/a/file.txt
+    path: /absolute/path/to/mount/file.txt
+
+    # type: Configmap (assume configmap always probably)
+  - dir: ./relative/path/to/a/dir
+    path: /absolute/path/to/mount/dir
+
+  # resource limits
+  resources: {}
+
+  # might be more stuff for some services, like:
+  # - node selectors
+  # - PVC / PV / Volumes (non-cfg) / VolumeMounts (non-cfg)
+  # - secret mounts
+  ## but this is the main stuff
+
+# Networking configuration for the service
+networking:
+  port: 8080
+  Service: 
+    enabled: "true"
+    # default to clusterIP, port 8080 to 8080, selector matching name from workload
+  VirtualService: 
+    enabled: "true"
+    endpoint: /service/endpoint 
+    # optional rewrite; if missing, no rewrite occurs
+    rewrite: /endpoint
+    # use name of service for virtual service
+    # route traffic to service
